@@ -1,0 +1,146 @@
+Guia Prático: Criando sua própria distro usando Stage do Funtoo
+
+Este guia mostra passo a passo como usar um stage do Funtoo para criar sua própria distribuição, configurar Portage, criar e testar ebuilds.
+
+---
+
+## 1. Preparar o Stage do Funtoo
+
+1. Baixe o stage do Funtoo (stage3 ou stage4).
+2. Extraia o tarball em sua pasta de trabalho:
+
+```
+tar xpf stage3-*.tar.xz -C /mnt/lfs
+cd /mnt/lfs
+```
+
+3. Verifique se as ferramentas essenciais estão disponíveis:
+
+```
+gcc --version
+make --version
+python3 --version
+git --version
+```
+
+> O stage já vem com compilador, binutils, bash, make, Python e Git.
+
+---
+
+## 2. Configurar Portage
+
+1. Crie o diretório de overlays:
+
+```
+mkdir -p /mnt/lfs/usr/local/portage
+```
+
+2. Configure um overlay local em `/etc/portage/repos.conf/my-overlay.conf`:
+
+```
+[my-overlay]
+location = /mnt/lfs/usr/local/portage
+masters = gentoo
+auto-sync = no
+```
+
+---
+
+## 3. Criar seu primeiro pacote / ebuild
+
+Estrutura mínima do overlay:
+
+```
+/mnt/lfs/usr/local/portage/
+└── app-hello/
+    └── hello-1.0/
+        ├── hello-1.0.ebuild
+        └── metadata.xml (opcional)
+```
+
+Exemplo de `hello-1.0.ebuild`:
+
+```
+EAPI=8
+DESCRIPTION="Hello World de teste"
+HOMEPAGE="https://example.com"
+SRC_URI=""
+LICENSE="GPL-3"
+SLOT="0"
+KEYWORDS="~amd64"
+
+src_unpack() {
+    mkdir -p "${WORKDIR}/hello-src"
+    echo "Hello World do ebuild!" > "${WORKDIR}/hello-src/README.txt"
+}
+
+src_compile() {
+    echo "Compilando Hello World..."
+}
+
+src_install() {
+    dodir /usr/local/hello
+    cp "${WORKDIR}/hello-src/README.txt" /usr/local/hello/
+    echo "Pacote hello instalado em /usr/local/hello"
+}
+```
+
+---
+
+## 4. Gerar o Manifest e o ebuild
+
+O comando abaixo cria ou atualiza o Manifest do pacote:
+
+```
+cd /mnt/lfs/usr/local/portage/app-hello/hello-1.0
+ebuild hello-1.0.ebuild manifest
+```
+
+> Este comando verifica checksums e dependências do pacote.
+
+---
+
+## 5. Testar o ebuild
+
+* Simular instalação:
+
+```
+emerge --pretend hello
+```
+
+* Instalar de verdade:
+
+```
+emerge -av hello
+```
+
+> O pacote será instalado em `/usr/local/hello` com o README “Hello World do ebuild!”.
+
+---
+
+## 6. Criar novos ebuilds e manter rolling release local
+
+1. Cada novo pacote vai para uma nova pasta no overlay:
+
+```
+/usr/local/portage/categoria/pacote-versao/
+```
+
+2. Atualize o Manifest sempre que criar ou alterar o ebuild:
+
+```
+ebuild pacote-versao.ebuild manifest
+```
+
+3. Para atualizar todos os pacotes do sistema:
+
+```
+emerge -uDN @world
+```
+
+> Isso mantém o sistema em rolling release, mesmo sem repositórios do Funtoo ativos.
+
+---
+
+Este guia fornece uma base completa para começar a criar e testar pacotes e manter um sistema baseado em stage do Funtoo, usando Portage e ebuilds próprios.
+

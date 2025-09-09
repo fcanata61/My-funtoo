@@ -1,0 +1,144 @@
+Funtoo Ebuild Tutorial - Guia Prático
+
+Este tutorial mostra passo a passo como criar, testar e gerenciar ebuilds no estilo Funtoo/Gentoo, usando a estrutura de diretórios típica do Funtoo.
+
+---
+
+Estrutura de diretórios do overlay Funtoo
+
+Supondo que você criou um overlay local chamado \~/my-overlay, a estrutura de diretórios pode ser:
+
+my-overlay/
+├── metadata.xml          # Metadata global do overlay (opcional)
+├── profiles/             # Arquivos de perfil
+│   └── repo\_name
+└── category/             # Categoria do pacote, ex: app-editors
+└── my-pkg/
+├── my-pkg-1.0.ebuild  # Script principal do pacote
+└── metadata.xml       # Metadata do pacote (opcional)
+
+> Em Funtoo, os overlays podem ter múltiplos kits; aqui simplificamos para um overlay local.
+
+---
+
+Passo 1: Criar um ebuild mínimo
+
+Arquivo: my-overlay/category/my-pkg/my-pkg-1.0.ebuild
+
+EAPI=8
+DESCRIPTION="Pacote de teste Hello World"
+HOMEPAGE="[https://example.com](https://example.com)"
+SRC\_URI=""
+LICENSE="GPL-3"
+SLOT="0"
+KEYWORDS="\~amd64"
+
+src\_install() {
+dodir /usr/local/my-pkg
+echo "Hello World" > /usr/local/my-pkg/README.txt
+}
+
+---
+
+Passo 2: Criar metadata.xml (opcional)
+
+Arquivo: my-overlay/category/my-pkg/metadata.xml
+
+<ebuild-metadata>
+    <maintainer>Seu Nome <email@exemplo.com></maintainer>
+    <license>GPL-3</license>
+    <slot>0</slot>
+</ebuild-metadata>
+
+> Atualize o manifest após criar ou alterar o metadata.xml.
+
+---
+
+Passo 3: Gerar manifest do ebuild
+
+```bash
+cd ~/my-overlay/category/my-pkg
+ebuild my-pkg-1.0.ebuild manifest
+```
+
+* Cria ou atualiza checksums e informações de dependências.
+
+---
+
+Passo 4: Testar extração (unpack)
+
+```bash
+ebuild my-pkg-1.0.ebuild unpack
+```
+
+* Extrai os arquivos fonte definidos em SRC\_URI (mesmo que vazio).
+
+---
+
+Passo 5: Testar compilação
+
+```bash
+ebuild my-pkg-1.0.ebuild compile
+```
+
+* Apenas compila o pacote, útil para debug.
+
+---
+
+Passo 6: Testar instalação
+
+```bash
+ebuild my-pkg-1.0.ebuild install
+```
+
+* Instala o pacote localmente sem atualizar o sistema global.
+
+---
+
+Passo 7: Simular instalação completa com emerge
+
+```bash
+emerge --pretend my-pkg
+```
+
+* Mostra o que seria feito, sem instalar.
+
+```bash
+emerge -av my-pkg
+```
+
+* Instala o pacote, compilando e resolvendo dependências.
+
+---
+
+Passo 8: Adicionar overlay ao Portage
+
+Arquivo de configuração: /etc/portage/repos.conf/my-overlay.conf
+
+\[my-overlay]
+location = /home/usuario/my-overlay
+masters = gentoo
+auto-sync = no
+
+* Depois de configurar, rode:
+
+```bash
+emerge --sync
+```
+
+* Para sincronizar árvore Portage.
+
+---
+
+Resumo do fluxo de teste de ebuild
+
+1. Criar diretório do pacote e ebuild.
+2. Criar/atualizar metadata.xml se necessário.
+3. Rodar `ebuild ... manifest`.
+4. Testar etapas individuais: `unpack`, `compile`, `install`.
+5. Simular ou instalar com `emerge`.
+
+---
+
+Com isso, você tem um guia completo em texto para começar a criar e testar ebuilds no estilo Funtoo/Gentoo.
+
